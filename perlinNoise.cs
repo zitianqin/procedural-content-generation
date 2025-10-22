@@ -86,5 +86,11 @@ public class perlinNoise {
         return p[p[p[x] + y] + z];
     }
 
+    public static double lerp(double a, double b, double t)
+    {
+        return a + t * (b - a);
+    }
+
+
 }
 
