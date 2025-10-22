@@ -70,7 +70,7 @@ public class perlinNoise {
         shuffle(perm, seed);
         for (int i = 0; i < 512; i++)
         {
-            p[x] = permutation[x % 256];
+            p[i] = permutation[i % 256];
         }
     }
 
