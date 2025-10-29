@@ -233,7 +233,7 @@ public class PerlinNoise : MonoBehaviour
 
         MeshRenderer renderer = plane.GetComponent<MeshRenderer>();
         Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        material.color = Color.white;
+        material.color = new Color(0.3f, 0.7f, 0.3f); // grassy green
         renderer.material = material;
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
         renderer.receiveShadows = true;
