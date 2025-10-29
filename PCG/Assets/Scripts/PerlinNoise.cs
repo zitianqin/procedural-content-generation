@@ -232,9 +232,11 @@ public class PerlinNoise : MonoBehaviour
         meshFilter.sharedMesh = mesh;
 
         MeshRenderer renderer = plane.GetComponent<MeshRenderer>();
-        Material material = new Material(Shader.Find("Unlit/Color"));
+        Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         material.color = Color.white;
         renderer.material = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        renderer.receiveShadows = true;
     }
 
     // Update is called once per frame
