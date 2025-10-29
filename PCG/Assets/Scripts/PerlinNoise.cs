@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PerlinNoise : MonoBehaviour
 {
@@ -150,31 +151,64 @@ public class PerlinNoise : MonoBehaviour
         return (res + 1.0) / 2.0; // Normalise result to [0,1]
     }
 
-    public Texture3D GenerateNoiseCube(int size, float scale)
+    public Mesh GenerateNoiseMesh(int resolution, float size, float frequency, float heightMultiplier, float uvScale)
     {
-        Texture3D tex = new Texture3D(size, size, size, TextureFormat.RFloat, false);
-        Color[] colors = new Color[size * size * size];
+        int vertsPerAxis = resolution + 1;
+        Vector3[] vertices = new Vector3[vertsPerAxis * vertsPerAxis];
+        Vector2[] uvs = new Vector2[vertsPerAxis * vertsPerAxis];
+        int[] triangles = new int[resolution * resolution * 6];
 
-        int index = 0;
-        for (int z = 0; z < size; z++)
+        int vertexIndex = 0;
+        for (int y = 0; y < vertsPerAxis; y++)
         {
-            for (int y = 0; y < size; y++)
+            float percentY = y / (float)resolution;
+            for (int x = 0; x < vertsPerAxis; x++)
             {
-                for (int x = 0; x < size; x++)
-                {
-                    double nx = x / (double)size * scale;
-                    double ny = y / (double)size * scale;
-                    double nz = z / (double)size * scale;
+                float percentX = x / (float)resolution;
 
-                    double val = noise(nx, ny, nz); // from your PerlinNoise class
-                    colors[index++] = new Color((float)val, 0, 0, 1); // store noise in R channel
-                }
+                double noiseValue = noise(percentX * frequency, percentY * frequency, 0.0);
+                float height = ((float)noiseValue - 0.5f) * heightMultiplier;
+
+                float posX = (percentX - 0.5f) * size;
+                float posZ = (percentY - 0.5f) * size;
+
+                vertices[vertexIndex] = new Vector3(posX, height, posZ);
+                uvs[vertexIndex] = new Vector2(percentX * uvScale, percentY * uvScale);
+                vertexIndex++;
             }
         }
 
-        tex.SetPixels(colors);
-        tex.Apply();
-        return tex;
+        int triangleIndex = 0;
+        for (int y = 0; y < resolution; y++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                int bottomLeft = y * vertsPerAxis + x;
+                int bottomRight = bottomLeft + 1;
+                int topLeft = bottomLeft + vertsPerAxis;
+                int topRight = topLeft + 1;
+
+                triangles[triangleIndex++] = bottomLeft;
+                triangles[triangleIndex++] = topLeft;
+                triangles[triangleIndex++] = bottomRight;
+
+                triangles[triangleIndex++] = bottomRight;
+                triangles[triangleIndex++] = topLeft;
+                triangles[triangleIndex++] = topRight;
+            }
+        }
+
+        Mesh mesh = new Mesh
+        {
+            indexFormat = vertices.Length > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16, // switch to 32-bit indices if vertex count exceeds 16-bit limit
+            vertices = vertices,
+            triangles = triangles,
+            uv = uvs // store generated UV coordinates for texturing
+        };
+        mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
 
@@ -183,32 +217,24 @@ public class PerlinNoise : MonoBehaviour
         int seedRes = 100000; // (int)Math.Floor(random(100));
         pnMain(seedRes);
 
-        int size = 32;
-        float scale = 4f;
+        int meshResolution = 256;
+        float planeSize = 500f;
+        float noiseFrequency = 8f;
+        float heightMultiplier = 20f;
+        float uvScale = 50f;
 
-        Texture3D cubeTex = GenerateNoiseCube(size, scale);
+        Mesh mesh = GenerateNoiseMesh(meshResolution, planeSize, noiseFrequency, heightMultiplier, uvScale);
 
-        for (int z = 0; z < size; z += 4) // skip some for performance
-        {
-            Texture2D slice = new Texture2D(size, size, TextureFormat.RFloat, false);
+        GameObject plane = new GameObject("PerlinNoisePlane", typeof(MeshFilter), typeof(MeshRenderer));
+        plane.transform.position = Vector3.zero;
 
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float val = cubeTex.GetPixel(x, y, z).r;
-                    slice.SetPixel(x, y, new Color(val, val, val, 1));
-                }
-            }
+        MeshFilter meshFilter = plane.GetComponent<MeshFilter>();
+        meshFilter.sharedMesh = mesh;
 
-            slice.Apply();
-
-            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            plane.transform.position = new Vector3(0, 0, z * 0.2f);
-            plane.transform.localScale = new Vector3(1, 1, 1);
-            plane.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Unlit/Texture"));
-            plane.GetComponent<MeshRenderer>().material.mainTexture = slice;
-        }
+        MeshRenderer renderer = plane.GetComponent<MeshRenderer>();
+        Material material = new Material(Shader.Find("Unlit/Color"));
+        material.color = Color.white;
+        renderer.material = material;
     }
 
     // Update is called once per frame
