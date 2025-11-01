@@ -151,11 +151,64 @@ public class PerlinNoise : MonoBehaviour
         return (res + 1.0) / 2.0; // Normalise result to [0,1]
     }
 
+    // Used to hold height and colour result from terrain processing
+    private struct TerrainVertex
+    {
+        public float height;
+        public Color color;
+    }
+
+    // Assign colour based on the terrain height
+    // Flattens ocean areas to create flat water surface
+    private TerrainVertex ProcessTerrainVertex(float originalHeight)
+    {
+        // Colour height thresholds
+        float oceanThreshold = -0.9f * 20f;
+        float beachStartThreshold = -0.9f * 20f;
+        float beachEndThreshold = -0.7f * 20f;
+        float grassEndThreshold = -0.3f * 20f;
+        float maxHeight = 1.0f * 20f;
+        
+        float height = originalHeight;
+        Color color;
+        
+        // Make ocean flat
+        float oceanLevel = oceanThreshold;
+        if (height <= oceanThreshold)
+        {
+            height = oceanLevel;
+        }
+        
+        // Assign colour
+        if (height <= oceanThreshold)
+        {
+            color = new Color(0.1f, 0.3f, 0.8f); // blue
+        }
+        else if (height > beachStartThreshold && height <= beachEndThreshold)
+        {
+            color = new Color(0.9f, 0.8f, 0.5f); // yellow
+        }
+        else if (height > beachEndThreshold && height <= grassEndThreshold)
+        {
+            color = new Color(0.3f, 0.7f, 0.3f); // green
+        }
+        else // mountain
+        {
+            Color greyColor = new Color(0.5f, 0.5f, 0.5f); // grey
+            Color snowColor = new Color(0.95f, 0.95f, 0.98f); // white/snow
+            float snowProgress = Mathf.Clamp01((height - grassEndThreshold) / (maxHeight - grassEndThreshold));
+            color = Color.Lerp(greyColor, snowColor, snowProgress);
+        }
+        
+        return new TerrainVertex { height = height, color = color };
+    }
+
     public Mesh GenerateNoiseMesh(int resolution, float size, float frequency, float heightMultiplier, float uvScale)
     {
         int vertsPerAxis = resolution + 1;
         Vector3[] vertices = new Vector3[vertsPerAxis * vertsPerAxis];
         Vector2[] uvs = new Vector2[vertsPerAxis * vertsPerAxis];
+        Color[] colors = new Color[vertsPerAxis * vertsPerAxis];
         int[] triangles = new int[resolution * resolution * 6];
 
         int vertexIndex = 0;
@@ -167,13 +220,16 @@ public class PerlinNoise : MonoBehaviour
                 float percentX = x / (float)resolution;
 
                 double noiseValue = noise(percentX * frequency, percentY * frequency, 0.0);
-                float height = ((float)noiseValue - 0.5f) * heightMultiplier;
+                float originalHeight = ((float)noiseValue - 0.5f) * heightMultiplier;
 
                 float posX = (percentX - 0.5f) * size;
                 float posZ = (percentY - 0.5f) * size;
-
-                vertices[vertexIndex] = new Vector3(posX, height, posZ);
+                
+                TerrainVertex terrainVertex = ProcessTerrainVertex(originalHeight);
+                vertices[vertexIndex] = new Vector3(posX, terrainVertex.height, posZ);
                 uvs[vertexIndex] = new Vector2(percentX * uvScale, percentY * uvScale);
+                colors[vertexIndex] = terrainVertex.color;
+                
                 vertexIndex++;
             }
         }
@@ -203,7 +259,8 @@ public class PerlinNoise : MonoBehaviour
             indexFormat = vertices.Length > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16, // switch to 32-bit indices if vertex count exceeds 16-bit limit
             vertices = vertices,
             triangles = triangles,
-            uv = uvs // store generated UV coordinates for texturing
+            uv = uvs,
+            colors = colors
         };
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();
@@ -220,7 +277,7 @@ public class PerlinNoise : MonoBehaviour
         int meshResolution = 256;
         float planeSize = 500f;
         float noiseFrequency = 8f;
-        float heightMultiplier = 20f;
+        float heightMultiplier = 200f;
         float uvScale = 50f;
 
         Mesh mesh = GenerateNoiseMesh(meshResolution, planeSize, noiseFrequency, heightMultiplier, uvScale);
@@ -232,11 +289,10 @@ public class PerlinNoise : MonoBehaviour
         meshFilter.sharedMesh = mesh;
 
         MeshRenderer renderer = plane.GetComponent<MeshRenderer>();
-        Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        material.color = new Color(0.3f, 0.7f, 0.3f); // grassy green
+        Material material = new Material(Shader.Find("Custom/VertexColorShader"));
         renderer.material = material;
-        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-        renderer.receiveShadows = true;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
     }
 
     // Update is called once per frame
