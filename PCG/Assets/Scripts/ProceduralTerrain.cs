@@ -7,6 +7,10 @@ public class ProceduralTerrain : MonoBehaviour
     [SerializeField] private int seed = 100000;
     [SerializeField] private float frequency = 8f;
     [SerializeField] private float heightMultiplier = 200f;
+    [SerializeField, Min(1)] private int octaves = 4;
+    [SerializeField, Range(0f, 1f)] private float persistence = 0.5f;
+    [SerializeField, Min(1f)] private float lacunarity = 2f;
+    [SerializeField] private Vector2 noiseOffset = Vector2.zero;
 
     [Header("Mesh Settings")]
     [SerializeField] private int meshResolution = 256;
@@ -14,6 +18,7 @@ public class ProceduralTerrain : MonoBehaviour
     [SerializeField] private float uvScale = 50f;
 
     private PerlinNoise noiseGenerator;
+    private Vector3[] octaveOffsets;
 
     private struct TerrainVertex
     {
@@ -24,6 +29,7 @@ public class ProceduralTerrain : MonoBehaviour
     private void Awake()
     {
         noiseGenerator = new PerlinNoise(seed);
+        BuildOctaveOffsets();
     }
 
     private void Start()
@@ -60,7 +66,13 @@ public class ProceduralTerrain : MonoBehaviour
             {
                 float percentX = x / (float)resolution;
 
-                double noiseValue = noiseGenerator.noise(percentX * noiseFrequency, percentY * noiseFrequency, 0.0);
+                double noiseValue = noiseGenerator.FractalNoise(
+                    new Vector3(percentX, percentY, 0f),
+                    octaves,
+                    persistence,
+                    lacunarity,
+                    noiseFrequency,
+                    octaveOffsets);
                 float originalHeight = ((float)noiseValue - 0.5f) * heightScale;
 
                 float posX = (percentX - 0.5f) * size;
@@ -148,5 +160,19 @@ public class ProceduralTerrain : MonoBehaviour
         }
 
         return new TerrainVertex { height = height, color = color };
+    }
+
+    private void BuildOctaveOffsets()
+    {
+        System.Random prng = new System.Random(seed);
+        int octaveCount = Mathf.Max(1, octaves);
+        octaveOffsets = new Vector3[octaveCount];
+        for (int i = 0; i < octaveCount; i++)
+        {
+            float offsetX = prng.Next(-100000, 100000) + noiseOffset.x;
+            float offsetY = prng.Next(-100000, 100000) + noiseOffset.y;
+            float offsetZ = prng.Next(-100000, 100000);
+            octaveOffsets[i] = new Vector3(offsetX, offsetY, offsetZ);
+        }
     }
 }
