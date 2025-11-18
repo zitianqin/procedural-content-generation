@@ -459,7 +459,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1595198343}
-  - component: {fileID: 1595198342}
+  - component: {fileID: 1595198344}
   m_Layer: 0
   m_Name: GameMaster
   m_TagString: Untagged
@@ -467,18 +467,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1595198342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1595198341}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b61b8218ba00638aa8bf0e9ec7c9d037, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PerlinNoise
 --- !u!4 &1595198343
 Transform:
   m_ObjectHideFlags: 0
@@ -494,6 +482,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1595198344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1595198341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e706607a90a3f0fb93788f0b283deec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralTerrain
+  seed: 100000
+  frequency: 8
+  heightMultiplier: 200
+  octaves: 4
+  persistence: 0.5
+  lacunarity: 2
+  noiseOffset: {x: 0, y: 0}
+  meshResolution: 256
+  planeSize: 500
+  uvScale: 50
+  oceanLevelNormalised: 0.41
+  beachEndNormalised: 0.43
+  grassEndNormalised: 0.47
+  snowStartNormalised: 0.59
+  beachGrassBlendNormalised: 0.005
+  grassRockBlendNormalised: 0.005
+  snowBlendNormalised: 0.005
+  oceanColour: {r: 0.1, g: 0.3, b: 0.8, a: 1}
+  beachColour: {r: 0.9, g: 0.8, b: 0.5, a: 1}
+  grassColour: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  rockColour: {r: 0.3, g: 0.3, b: 0.3, a: 1}
+  snowColour: {r: 0.98, g: 0.98, b: 0.96, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
