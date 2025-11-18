@@ -3,9 +3,26 @@
 // smooth it out, as well as along the edges
 
 using UnityEngine;
+using System;
 
-public class valueNoise
+public class ValueNoise : NoiseGeneratorBase
 {
+    private readonly Vector3 seedOffset;
+
+    public ValueNoise(int seed)
+    {
+        float offset = seed * 0.001f;
+        seedOffset = new Vector3(offset * 2f, offset * 3f, offset * 5f);
+    }
+
+    protected override double Sample(double x, double y, double z)
+    {
+        float sx = (float)(x + seedOffset.x);
+        float sy = (float)(y + seedOffset.y);
+        float sz = (float)(z + seedOffset.z);
+        return Value(new Vector3(sx, sy, sz));
+    }
+
     public static Texture3D GenerateTexture(int resolution, float timeOffset)
     {
         Texture3D tex = new Texture3D(resolution, resolution, resolution, TextureFormat.RGBA32, false);

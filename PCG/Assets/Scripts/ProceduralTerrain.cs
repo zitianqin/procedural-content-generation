@@ -4,7 +4,15 @@ using UnityEngine.Rendering.Universal;
 
 public class ProceduralTerrain : MonoBehaviour
 {
+    private enum NoiseType
+    {
+        Perlin,
+        Simplex,
+        Value
+    }
+
     [Header("Noise Settings")]
+    [SerializeField] private NoiseType noiseType = NoiseType.Perlin;
     [SerializeField] private int seed = 100000;
     [SerializeField] private float frequency = 8f;
     [SerializeField] private float heightMultiplier = 200f;
@@ -39,14 +47,12 @@ public class ProceduralTerrain : MonoBehaviour
     [SerializeField] private Color grassColour = new Color(0.3f, 0.7f, 0.3f);
     [SerializeField] private Color rockColour = new Color(0.3f, 0.3f, 0.3f);
     [SerializeField] private Color snowColour = new Color(0.98f, 0.98f, 0.96f);
-
-    [Header("Water Settings")]
-    [SerializeField, Range(0f, 1f)] private float waterSmoothness = 0.95f;
-    [SerializeField, Range(0f, 1f)] private float waterMetallic = 0.15f;
     private const string ImportedWaterMaterialResource = "Water_mat_01";
     private const string ImportedWaterMeshResource = "WaterBlock_50m";
 
-    private PerlinNoise noiseGenerator;
+    private PerlinNoise perlinNoiseGenerator;
+    private SimplexNoise simplexNoiseGenerator;
+    private ValueNoise valueNoiseGenerator;
     private Vector3[] octaveOffsets;
 
     private struct TerrainVertex
@@ -57,7 +63,9 @@ public class ProceduralTerrain : MonoBehaviour
 
     private void Awake()
     {
-        noiseGenerator = new PerlinNoise(seed);
+        perlinNoiseGenerator = new PerlinNoise(seed);
+        simplexNoiseGenerator = new SimplexNoise(seed);
+        valueNoiseGenerator = new ValueNoise(seed);
         BuildOctaveOffsets();
     }
 
@@ -108,13 +116,39 @@ public class ProceduralTerrain : MonoBehaviour
             {
                 float percentX = x / (float)resolution;
 
-                double noiseValue = noiseGenerator.FractalNoise(
-                    new Vector3(percentX, percentY, 0f),
-                    octaves,
-                    persistence,
-                    lacunarity,
-                    noiseFrequency,
-                    octaveOffsets);
+                Vector3 samplePoint = new Vector3(percentX, percentY, 0f);
+                double noiseValue;
+
+                switch (noiseType)
+                {
+                    case NoiseType.Simplex:
+                        noiseValue = simplexNoiseGenerator.FractalNoise(
+                            samplePoint,
+                            octaves,
+                            persistence,
+                            lacunarity,
+                            noiseFrequency,
+                            octaveOffsets);
+                        break;
+                    case NoiseType.Value:
+                        noiseValue = valueNoiseGenerator.FractalNoise(
+                            samplePoint,
+                            octaves,
+                            persistence,
+                            lacunarity,
+                            noiseFrequency,
+                            octaveOffsets);
+                        break;
+                    default:
+                        noiseValue = perlinNoiseGenerator.FractalNoise(
+                            samplePoint,
+                            octaves,
+                            persistence,
+                            lacunarity,
+                            noiseFrequency,
+                            octaveOffsets);
+                        break;
+                }
                 float originalHeight = ((float)noiseValue - 0.5f) * heightScale;
 
                 float posX = (percentX - 0.5f) * size;
