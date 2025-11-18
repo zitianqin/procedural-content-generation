@@ -56,7 +56,7 @@ public class ProceduralTerrain : MonoBehaviour
 
     private void Start()
     {
-        Mesh mesh = GenerateNoiseMesh(meshResolution, planeSize, frequency, heightMultiplier, uvScale);
+        Mesh mesh = GenerateNoiseMesh(meshResolution, planeSize, frequency, heightMultiplier, uvScale, out Color[] vertexColors);
 
         GameObject plane = new GameObject("PerlinNoisePlane", typeof(MeshFilter), typeof(MeshRenderer));
         plane.transform.position = Vector3.zero;
@@ -65,14 +65,22 @@ public class ProceduralTerrain : MonoBehaviour
         meshFilter.sharedMesh = mesh;
 
         MeshRenderer renderer = plane.GetComponent<MeshRenderer>();
-        Material material = new Material(Shader.Find("Custom/VertexColorShader"));
+        Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        Texture2D vertexColorTexture = BuildVertexColorTexture(vertexColors, meshResolution + 1);
+        material.SetTexture("_BaseMap", vertexColorTexture);
+        float minUvScale = Mathf.Max(1e-4f, uvScale);
+        material.SetTextureScale("_BaseMap", Vector2.one / minUvScale);
+        material.SetTextureOffset("_BaseMap", Vector2.zero);
+        material.SetColor("_BaseColor", Color.white);
+        material.SetFloat("_Smoothness", 0.1f);
+        material.SetFloat("_Metallic", 0f);
         renderer.material = material;
-        renderer.shadowCastingMode = ShadowCastingMode.Off;
-        renderer.receiveShadows = false;
+        renderer.shadowCastingMode = ShadowCastingMode.On;
+        renderer.receiveShadows = true;
     }
 
     // Creates vertices, colours and triangles for a Perlin-based surface
-    private Mesh GenerateNoiseMesh(int resolution, float size, float noiseFrequency, float heightScale, float uvTiling)
+    private Mesh GenerateNoiseMesh(int resolution, float size, float noiseFrequency, float heightScale, float uvTiling, out Color[] vertexColours)
     {
         int vertsPerAxis = resolution + 1;
         Vector3[] vertices = new Vector3[vertsPerAxis * vertsPerAxis];
@@ -140,7 +148,30 @@ public class ProceduralTerrain : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();
         mesh.RecalculateBounds();
+        vertexColours = colours;
         return mesh;
+    }
+
+    private Texture2D BuildVertexColorTexture(Color[] colours, int vertsPerAxis)
+    {
+        Texture2D texture = new Texture2D(vertsPerAxis, vertsPerAxis, TextureFormat.RGBA32, false)
+        {
+            wrapMode = TextureWrapMode.Clamp,
+            filterMode = FilterMode.Bilinear,
+            name = "TerrainVertexColors"
+        };
+
+        for (int y = 0; y < vertsPerAxis; y++)
+        {
+            for (int x = 0; x < vertsPerAxis; x++)
+            {
+                int index = y * vertsPerAxis + x;
+                texture.SetPixel(x, y, colours[index]);
+            }
+        }
+
+        texture.Apply(false, false);
+        return texture;
     }
 
     // Assign colour based on the terrain height, flattening water areas
