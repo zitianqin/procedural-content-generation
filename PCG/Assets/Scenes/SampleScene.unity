@@ -497,6 +497,48 @@ MonoBehaviour:
   seed: 100000
   frequency: 8
   heightMultiplier: 200
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.4810775
+      value: 0.30835354
+      inSlope: 0.50518024
+      outSlope: 0.50518024
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.29224214
+    - serializedVersion: 3
+      time: 0.8310669
+      value: 0.55713195
+      inSlope: 0.4691185
+      outSlope: 0.4691185
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.29722425
+      outWeight: 0.3059933
+    - serializedVersion: 3
+      time: 1.0078866
+      value: 1.0041797
+      inSlope: 2.621257
+      outSlope: 2.621257
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.22116989
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   octaves: 4
   persistence: 0.5
   lacunarity: 2
