@@ -128,7 +128,8 @@ public class ProceduralTerrain : MonoBehaviour
         float beachStartThreshold = -0.9f * 20f;
         float beachEndThreshold = -0.7f * 20f;
         float grassEndThreshold = -0.3f * 20f;
-        float maxHeight = 1.0f * 20f;
+        float snowStartThreshold = 0.9f * 20f;
+        // float maxHeight = 1.0f * 20f;
 
         float height = originalHeight;
         Color color;
@@ -151,12 +152,13 @@ public class ProceduralTerrain : MonoBehaviour
         {
             color = new Color(0.3f, 0.7f, 0.3f);
         }
+        else if (height > grassEndThreshold && height <= snowStartThreshold)
+        {
+            color = new Color(0.25f, 0.25f, 0.25f);
+        }
         else
         {
-            Color greyColor = new Color(0.5f, 0.5f, 0.5f);
-            Color snowColor = new Color(0.95f, 0.95f, 0.98f);
-            float snowProgress = Mathf.Clamp01((height - grassEndThreshold) / (maxHeight - grassEndThreshold));
-            color = Color.Lerp(greyColor, snowColor, snowProgress);
+            color = new Color(0.98f, 0.98f, 0.96f);
         }
 
         return new TerrainVertex { height = height, color = color };
