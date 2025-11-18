@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-public class ValueNoise
+public class valueNoise
 {
     public static Texture3D GenerateTexture(int resolution, float timeOffset)
     {
