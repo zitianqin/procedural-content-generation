@@ -504,6 +504,18 @@ MonoBehaviour:
   meshResolution: 256
   planeSize: 500
   uvScale: 50
+  oceanLevelNormalised: 0.41
+  beachEndNormalised: 0.43
+  grassEndNormalised: 0.47
+  snowStartNormalised: 0.59
+  beachGrassBlendNormalised: 0.005
+  grassRockBlendNormalised: 0.005
+  snowBlendNormalised: 0.005
+  oceanColour: {r: 0.1, g: 0.3, b: 0.8, a: 1}
+  beachColour: {r: 0.9, g: 0.8, b: 0.5, a: 1}
+  grassColour: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  rockColour: {r: 0.3, g: 0.3, b: 0.3, a: 1}
+  snowColour: {r: 0.98, g: 0.98, b: 0.96, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
