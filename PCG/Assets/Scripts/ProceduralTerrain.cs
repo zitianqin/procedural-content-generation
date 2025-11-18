@@ -17,13 +17,29 @@ public class ProceduralTerrain : MonoBehaviour
     [SerializeField] private float planeSize = 500f;
     [SerializeField] private float uvScale = 50f;
 
+    [Header("Biome Settings")]
+    [SerializeField, Range(0f, 1f)] private float oceanLevelNormalised = 0.41f;
+    [SerializeField, Range(0f, 1f)] private float beachEndNormalised = 0.43f;
+    [SerializeField, Range(0f, 1f)] private float grassEndNormalised = 0.47f;
+    [SerializeField, Range(0f, 1f)] private float snowStartNormalised = 0.59f;
+    [SerializeField, Range(0f, 0.2f)] private float beachGrassBlendNormalised = 0.005f;
+    [SerializeField, Range(0f, 0.2f)] private float grassRockBlendNormalised = 0.005f;
+    [SerializeField, Range(0f, 0.2f)] private float snowBlendNormalised = 0.005f;
+
+    [Header("Color Settings")]
+    [SerializeField] private Color oceanColour = new Color(0.1f, 0.3f, 0.8f);
+    [SerializeField] private Color beachColour = new Color(0.9f, 0.8f, 0.5f);
+    [SerializeField] private Color grassColour = new Color(0.3f, 0.7f, 0.3f);
+    [SerializeField] private Color rockColour = new Color(0.3f, 0.3f, 0.3f);
+    [SerializeField] private Color snowColour = new Color(0.98f, 0.98f, 0.96f);
+
     private PerlinNoise noiseGenerator;
     private Vector3[] octaveOffsets;
 
     private struct TerrainVertex
     {
         public float height;
-        public Color color;
+        public Color colour;
     }
 
     private void Awake()
@@ -55,7 +71,7 @@ public class ProceduralTerrain : MonoBehaviour
         int vertsPerAxis = resolution + 1;
         Vector3[] vertices = new Vector3[vertsPerAxis * vertsPerAxis];
         Vector2[] uvs = new Vector2[vertsPerAxis * vertsPerAxis];
-        Color[] colors = new Color[vertsPerAxis * vertsPerAxis];
+        Color[] colours = new Color[vertsPerAxis * vertsPerAxis];
         int[] triangles = new int[resolution * resolution * 6];
 
         int vertexIndex = 0;
@@ -81,7 +97,7 @@ public class ProceduralTerrain : MonoBehaviour
                 TerrainVertex terrainVertex = ProcessTerrainVertex(originalHeight);
                 vertices[vertexIndex] = new Vector3(posX, terrainVertex.height, posZ);
                 uvs[vertexIndex] = new Vector2(percentX * uvTiling, percentY * uvTiling);
-                colors[vertexIndex] = terrainVertex.color;
+                colours[vertexIndex] = terrainVertex.colour;
 
                 vertexIndex++;
             }
@@ -113,7 +129,7 @@ public class ProceduralTerrain : MonoBehaviour
             vertices = vertices,
             triangles = triangles,
             uv = uvs,
-            colors = colors
+            colors = colours
         };
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();
@@ -124,15 +140,17 @@ public class ProceduralTerrain : MonoBehaviour
     // Assign colour based on the terrain height, flattening water areas
     private TerrainVertex ProcessTerrainVertex(float originalHeight)
     {
-        float oceanThreshold = -0.9f * 20f;
-        // float beachStartThreshold = -0.9f * 20f;
-        float beachEndThreshold = -0.7f * 20f;
-        float grassEndThreshold = -0.3f * 20f;
-        float snowStartThreshold = 0.9f * 20f;
-        // float maxHeight = 1.0f * 20f;
+        float minHeight = -heightMultiplier * 0.5f;
+        float maxHeight = heightMultiplier * 0.5f;
+        float heightRange = Mathf.Max(1e-3f, maxHeight - minHeight);
+
+        float oceanThreshold = Mathf.Lerp(minHeight, maxHeight, oceanLevelNormalised);
+        float beachEndThreshold = Mathf.Lerp(minHeight, maxHeight, beachEndNormalised);
+        float grassEndThreshold = Mathf.Lerp(minHeight, maxHeight, grassEndNormalised);
+        float snowStartThreshold = Mathf.Lerp(minHeight, maxHeight, snowStartNormalised);
 
         float height = originalHeight;
-        Color color;
+        Color colour;
 
         float oceanLevel = oceanThreshold;
         if (height <= oceanThreshold)
@@ -140,15 +158,9 @@ public class ProceduralTerrain : MonoBehaviour
             height = oceanLevel;
         }
 
-        Color oceanColor = new Color(0.1f, 0.3f, 0.8f);
-        Color beachColor = new Color(0.9f, 0.8f, 0.5f);
-        Color grassColor = new Color(0.3f, 0.7f, 0.3f);
-        Color rockColor = new Color(0.3f, 0.3f, 0.3f);
-        Color snowColor = new Color(0.98f, 0.98f, 0.96f);
-
-        float beachGrassBlendRange = 0.05f * 20f;
-        float grassRockBlendRange = 0.05f * 20f;
-        float snowBlendRange = 0.05f * 20f;
+        float beachGrassBlendRange = beachGrassBlendNormalised * heightRange;
+        float grassRockBlendRange = grassRockBlendNormalised * heightRange;
+        float snowBlendRange = snowBlendNormalised * heightRange;
 
         float beachGrassBlendStart = beachEndThreshold - beachGrassBlendRange;
         float beachGrassBlendEnd = beachEndThreshold + beachGrassBlendRange;
@@ -161,37 +173,37 @@ public class ProceduralTerrain : MonoBehaviour
 
         if (height <= oceanThreshold)
         {
-            color = oceanColor;
+            colour = oceanColour;
         }
         else if (height <= beachGrassBlendStart)
         {
-            color = beachColor;
+            colour = beachColour;
         }
         else if (height < beachGrassBlendEnd)
         {
             float blend = Mathf.InverseLerp(beachGrassBlendStart, beachGrassBlendEnd, height);
-            color = Color.Lerp(beachColor, grassColor, Mathf.Clamp01(blend));
+            colour = Color.Lerp(beachColour, grassColour, Mathf.Clamp01(blend));
         }
         else if (height <= grassRockBlendStart)
         {
-            color = grassColor;
+            colour = grassColour;
         }
         else if (height < grassRockBlendEnd)
         {
             float blend = Mathf.InverseLerp(grassRockBlendStart, grassRockBlendEnd, height);
-            color = Color.Lerp(grassColor, rockColor, Mathf.Clamp01(blend));
+            colour = Color.Lerp(grassColour, rockColour, Mathf.Clamp01(blend));
         }
         else if (height < snowBlendStart)
         {
-            color = rockColor;
+            colour = rockColour;
         }
         else
         {
             float blend = Mathf.InverseLerp(snowBlendStart, snowBlendEnd, height);
-            color = Color.Lerp(rockColor, snowColor, Mathf.Clamp01(blend));
+            colour = Color.Lerp(rockColour, snowColour, Mathf.Clamp01(blend));
         }
 
-        return new TerrainVertex { height = height, color = color };
+        return new TerrainVertex { height = height, colour = colour };
     }
 
     private void BuildOctaveOffsets()
