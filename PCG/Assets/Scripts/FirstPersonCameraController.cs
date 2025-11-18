@@ -6,10 +6,13 @@ public class FirstPersonCameraController : MonoBehaviour
 {
     [Header("Movement")]
     [Tooltip("Base movement speed in units per second.")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 20f;
+
+    [Tooltip("Multiplier applied to movement speed while holding the sprint key (Left Ctrl).")]
+    public float sprintMultiplier = 4f;
 
     [Tooltip("Vertical movement speed when using ascend/descend keys (Space/Shift).")]
-    public float verticalSpeed = 10f;
+    public float verticalSpeed = 20f;
 
     [Header("Mouse Look")]
     [Tooltip("Multiplier applied to mouse delta when rotating the camera.")]
@@ -98,9 +101,11 @@ public class FirstPersonCameraController : MonoBehaviour
         Vector3 planarInput = new Vector3(right, 0f, forward);
         planarInput = planarInput.sqrMagnitude > 1f ? planarInput.normalized : planarInput;
 
+        float speedMultiplier = (_keyboard.leftCtrlKey != null && _keyboard.leftCtrlKey.isPressed) ? sprintMultiplier : 1f;
+
         Quaternion yawRotation = Quaternion.Euler(0f, _yaw, 0f);
         Vector3 planarDirection = yawRotation * planarInput;
-        Vector3 velocity = planarDirection * moveSpeed;
+        Vector3 velocity = planarDirection * moveSpeed * speedMultiplier;
 
         float verticalDirection = 0f;
         if (_keyboard.spaceKey.isPressed)
