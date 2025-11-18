@@ -125,7 +125,7 @@ public class ProceduralTerrain : MonoBehaviour
     private TerrainVertex ProcessTerrainVertex(float originalHeight)
     {
         float oceanThreshold = -0.9f * 20f;
-        float beachStartThreshold = -0.9f * 20f;
+        // float beachStartThreshold = -0.9f * 20f;
         float beachEndThreshold = -0.7f * 20f;
         float grassEndThreshold = -0.3f * 20f;
         float snowStartThreshold = 0.9f * 20f;
@@ -140,25 +140,55 @@ public class ProceduralTerrain : MonoBehaviour
             height = oceanLevel;
         }
 
+        Color oceanColor = new Color(0.1f, 0.3f, 0.8f);
+        Color beachColor = new Color(0.9f, 0.8f, 0.5f);
+        Color grassColor = new Color(0.3f, 0.7f, 0.3f);
+        Color rockColor = new Color(0.3f, 0.3f, 0.3f);
+        Color snowColor = new Color(0.98f, 0.98f, 0.96f);
+
+        float beachGrassBlendRange = 0.05f * 20f;
+        float grassRockBlendRange = 0.05f * 20f;
+        float snowBlendRange = 0.05f * 20f;
+
+        float beachGrassBlendStart = beachEndThreshold - beachGrassBlendRange;
+        float beachGrassBlendEnd = beachEndThreshold + beachGrassBlendRange;
+
+        float grassRockBlendStart = grassEndThreshold - grassRockBlendRange;
+        float grassRockBlendEnd = grassEndThreshold + grassRockBlendRange;
+
+        float snowBlendStart = snowStartThreshold - snowBlendRange;
+        float snowBlendEnd = snowStartThreshold + snowBlendRange;
+
         if (height <= oceanThreshold)
         {
-            color = new Color(0.1f, 0.3f, 0.8f);
+            color = oceanColor;
         }
-        else if (height > beachStartThreshold && height <= beachEndThreshold)
+        else if (height <= beachGrassBlendStart)
         {
-            color = new Color(0.9f, 0.8f, 0.5f);
+            color = beachColor;
         }
-        else if (height > beachEndThreshold && height <= grassEndThreshold)
+        else if (height < beachGrassBlendEnd)
         {
-            color = new Color(0.3f, 0.7f, 0.3f);
+            float blend = Mathf.InverseLerp(beachGrassBlendStart, beachGrassBlendEnd, height);
+            color = Color.Lerp(beachColor, grassColor, Mathf.Clamp01(blend));
         }
-        else if (height > grassEndThreshold && height <= snowStartThreshold)
+        else if (height <= grassRockBlendStart)
         {
-            color = new Color(0.25f, 0.25f, 0.25f);
+            color = grassColor;
+        }
+        else if (height < grassRockBlendEnd)
+        {
+            float blend = Mathf.InverseLerp(grassRockBlendStart, grassRockBlendEnd, height);
+            color = Color.Lerp(grassColor, rockColor, Mathf.Clamp01(blend));
+        }
+        else if (height < snowBlendStart)
+        {
+            color = rockColor;
         }
         else
         {
-            color = new Color(0.98f, 0.98f, 0.96f);
+            float blend = Mathf.InverseLerp(snowBlendStart, snowBlendEnd, height);
+            color = Color.Lerp(rockColor, snowColor, Mathf.Clamp01(blend));
         }
 
         return new TerrainVertex { height = height, color = color };
