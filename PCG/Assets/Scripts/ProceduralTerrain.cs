@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class ProceduralTerrain : MonoBehaviour
 {
@@ -39,6 +40,12 @@ public class ProceduralTerrain : MonoBehaviour
     [SerializeField] private Color rockColour = new Color(0.3f, 0.3f, 0.3f);
     [SerializeField] private Color snowColour = new Color(0.98f, 0.98f, 0.96f);
 
+    [Header("Water Settings")]
+    [SerializeField, Range(0f, 1f)] private float waterSmoothness = 0.95f;
+    [SerializeField, Range(0f, 1f)] private float waterMetallic = 0.15f;
+    private const string ImportedWaterMaterialResource = "Water_mat_01";
+    private const string ImportedWaterMeshResource = "WaterBlock_50m";
+
     private PerlinNoise noiseGenerator;
     private Vector3[] octaveOffsets;
 
@@ -77,6 +84,11 @@ public class ProceduralTerrain : MonoBehaviour
         renderer.material = material;
         renderer.shadowCastingMode = ShadowCastingMode.On;
         renderer.receiveShadows = true;
+
+        float minHeight = -heightMultiplier * 0.5f;
+        float maxHeight = heightMultiplier * 0.5f;
+        float oceanHeight = Mathf.Lerp(minHeight, maxHeight, oceanLevelNormalised);
+        CreateWaterPlane(planeSize, oceanHeight);
     }
 
     // Creates vertices, colours and triangles for a Perlin-based surface
@@ -174,7 +186,32 @@ public class ProceduralTerrain : MonoBehaviour
         return texture;
     }
 
-    // Assign colour based on the terrain height, flattening water areas
+    private void CreateWaterPlane(float size, float oceanHeight)
+    {
+        GameObject waterPlane = new GameObject("WaterPlane", typeof(MeshFilter), typeof(MeshRenderer));
+        waterPlane.transform.position = new Vector3(0f, oceanHeight, 0f);
+
+        // Scale the water plane
+        MeshFilter meshFilter = waterPlane.GetComponent<MeshFilter>();
+        Mesh importedMesh = Resources.Load<Mesh>(ImportedWaterMeshResource);
+        meshFilter.sharedMesh = importedMesh;
+        Vector3 meshSize = importedMesh.bounds.size;
+        float scaleX = size / Mathf.Max(1e-4f, meshSize.x);
+        float scaleZ = size / Mathf.Max(1e-4f, meshSize.z);
+        waterPlane.transform.localScale = new Vector3(scaleX, 1f, scaleZ);
+
+        // Configure material
+        MeshRenderer renderer = waterPlane.GetComponent<MeshRenderer>();
+        Material importedWaterMaterial = Resources.Load<Material>(ImportedWaterMaterialResource);
+        renderer.material = Instantiate(importedWaterMaterial);
+
+        // Configure shadows
+        renderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbesAndSkybox;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+    }
+
+    // Assign colour based on the terrain height
     private TerrainVertex ProcessTerrainVertex(float originalHeight)
     {
         float minHeight = -heightMultiplier * 0.5f;
@@ -183,18 +220,11 @@ public class ProceduralTerrain : MonoBehaviour
 
         float height = ApplyHeightCurve(originalHeight, minHeight, maxHeight);
 
-        float oceanThreshold = Mathf.Lerp(minHeight, maxHeight, oceanLevelNormalised);
         float beachEndThreshold = Mathf.Lerp(minHeight, maxHeight, beachEndNormalised);
         float grassEndThreshold = Mathf.Lerp(minHeight, maxHeight, grassEndNormalised);
         float snowStartThreshold = Mathf.Lerp(minHeight, maxHeight, snowStartNormalised);
 
         Color colour;
-
-        float oceanLevel = oceanThreshold;
-        if (height <= oceanThreshold)
-        {
-            height = oceanLevel;
-        }
 
         float beachGrassBlendRange = beachGrassBlendNormalised * heightRange;
         float grassRockBlendRange = grassRockBlendNormalised * heightRange;
@@ -209,11 +239,7 @@ public class ProceduralTerrain : MonoBehaviour
         float snowBlendStart = snowStartThreshold - snowBlendRange;
         float snowBlendEnd = snowStartThreshold + snowBlendRange;
 
-        if (height <= oceanThreshold)
-        {
-            colour = oceanColour;
-        }
-        else if (height <= beachGrassBlendStart)
+        if (height <= beachGrassBlendStart)
         {
             colour = beachColour;
         }
