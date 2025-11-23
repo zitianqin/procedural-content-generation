@@ -22,8 +22,8 @@ Unity 6000.2.9f1 project that turns Perlin, Simplex, and Value noise into terrai
 **Perlin noise with a flattened height curve**
 ![Perlin noise with a flattened height curve](screenshots/perlin_flatcurve.png)
 
-**Perlin noise with a straight height curve**
-![Perlin noise with a straight height curve](screenshots/perlin_mountaincurve.png)
+**Perlin noise with a steeper height curve**
+![Perlin noise with a steeper height curve](screenshots/perlin_mountaincurve.png)
 
 **Simplex noise**
 ![Simplex noise](screenshots/simplex_default.png)
