@@ -30,3 +30,7 @@ Unity 6000.2.9f1 project that turns Perlin, Simplex, and Value noise into terrai
 
 **Value noise**
 ![Value noise](screenshots/value_noise.png)
+
+## Acknowledgements
+
+We would like to acknowledge the use of the [Simple Water Shader URP](https://assetstore.unity.com/packages/2d/textures-materials/water/simple-water-shader-urp-191449) provided by IgniteCoders for free on the Unity Asset Store, which we have used to generate a realistic water texture.
